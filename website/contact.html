@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Contact — The Hair Lounge by Nickita</title>
+<meta name="description" content="Contact The Hair Lounge by Nickita to book an appointment or ask a question." />
+<meta name="theme-color" content="#e0d2c0" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="logo">The Hair Lounge <span>by Nickita</span></a>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="gallery.html">Gallery</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html" class="active">Contact</a></li>
+      </ul>
+    </nav>
+    <div class="nav-cta">
+      <a href="contact.html" class="btn btn-outline">Book Now</a>
+      <a href="#" class="btn btn-primary">Loyalty Rewards</a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="hero" style="padding-bottom: 24px;">
+    <div class="container" style="grid-template-columns: 1fr; text-align: center;">
+      <div>
+        <span class="hero-eyebrow">Get in touch</span>
+        <h1>Book an Appointment</h1>
+        <p class="lead" style="margin: 0 auto;">
+          Call, email, or send a message below and we'll get back to you to confirm your visit.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt-bg">
+    <div class="container">
+      <div class="contact-grid">
+
+        <div>
+          <h3>Studio Info</h3>
+          <ul class="info-list">
+            <li><span class="label">Address</span><span>123 Main St, Your City, ST 00000</span></li>
+            <li><span class="label">Phone</span><span>(555) 123-4567</span></li>
+            <li><span class="label">Email</span><span>hello@thehairloungebynickita.com</span></li>
+            <li><span class="label">Hours</span><span>Tue–Fri 10am–7pm · Sat 9am–4pm · Sun–Mon Closed</span></li>
+          </ul>
+          <div class="map-placeholder">
+            [ Embed a Google Maps iframe here with your real address ]
+          </div>
+        </div>
+
+        <div>
+          <h3>Send a Message</h3>
+          <form class="contact-form">
+            <div>
+              <label for="name">Name</label>
+              <input id="name" name="name" type="text" required />
+            </div>
+            <div>
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" required />
+            </div>
+            <div>
+              <label for="service">Service Interested In</label>
+              <input id="service" name="service" type="text" placeholder="e.g. Balayage, Haircut" />
+            </div>
+            <div>
+              <label for="message">Message</label>
+              <textarea id="message" name="message" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Send Message</button>
+            <p class="form-status" style="color:#6b6058; font-size:0.9rem;"></p>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-logo">The Hair Lounge <span style="color:#a97b50">by Nickita</span></div>
+        <p>A boutique hair studio focused on craft, care, and community.</p>
+      </div>
+      <div>
+        <h4>Explore</h4>
+        <ul>
+          <li><a href="services.html">Services</a></li>
+          <li><a href="gallery.html">Gallery</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Studio Hours</h4>
+        <ul>
+          <li>Tue–Fri: 10am – 7pm</li>
+          <li>Saturday: 9am – 4pm</li>
+          <li>Sun–Mon: Closed</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; <span data-year></span> The Hair Lounge by Nickita. All rights reserved.</span>
+      <span>123 Main St, Your City — (555) 123-4567</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
