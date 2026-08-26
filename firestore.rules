@@ -1,0 +1,101 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    function isOwner(clientId) {
+      return isSignedIn() && request.auth.uid == clientId;
+    }
+
+    // clients/{clientId} - doc ID equals the signed-in client's uid (custom
+    // token is minted with uid == clients doc ID by the clientLogin function).
+    match /clients/{clientId} {
+      allow read: if isOwner(clientId) || isAdmin();
+      // Clients may only touch a narrow self-service field set (loyalty
+      // redemption, PIN changes, etc. all stay admin-driven in the current
+      // app - the client app never writes its own client doc today).
+      allow write: if isAdmin();
+    }
+
+    // records/{recordId} - visit history, has a clientId field.
+    // Every write path in the app today is admin-driven (check-in, add
+    // visit, edit notes, delete) - clients only ever read their own.
+    match /records/{recordId} {
+      allow read: if isSignedIn() &&
+        (resource.data.clientId == request.auth.uid || isAdmin());
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // hairChecks/{checkId} - clients submit their own "hair check" quiz
+    // from their own dashboard; admin can read/manage all.
+    match /hairChecks/{checkId} {
+      allow read: if isSignedIn() &&
+        (resource.data.clientId == request.auth.uid || isAdmin());
+      allow create: if isAdmin() || (isSignedIn() &&
+        request.resource.data.clientId == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    // slots/{slotId} - availability calendar. Admin manages freely.
+    // A signed-in client may only claim an OPEN slot for themselves,
+    // and only change the booking fields - never the date/time, and
+    // never someone else's booking.
+    match /slots/{slotId} {
+      allow read: if isSignedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        isSignedIn() &&
+        resource.data.isBooked == false &&
+        request.resource.data.isBooked == true &&
+        request.resource.data.clientId == request.auth.uid &&
+        request.resource.data.date == resource.data.date &&
+        request.resource.data.time == resource.data.time &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['isBooked', 'clientId', 'clientName', 'service'])
+      );
+    }
+
+    // services/{serviceId} - service catalog, read by clients (booking) and
+    // admin (management); only admin edits it.
+    match /services/{serviceId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // trends/{trendId} - hair trend cards shown on the client dashboard.
+    match /trends/{trendId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // settings/config - business config (loyalty threshold, weekly
+    // schedule, check-in counters, licenses...). No secrets live here
+    // anymore (the admin PIN lives in the locked-down `secure` collection
+    // below) - safe for any signed-in user to read, admin-only to write.
+    match /settings/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // secure/* - admin credentials. Never touched by client SDKs; only
+    // Cloud Functions (via the Admin SDK, which bypasses these rules
+    // entirely) read or write here.
+    match /secure/{docId} {
+      allow read, write: if false;
+    }
+
+    // Default-deny anything not explicitly matched above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
