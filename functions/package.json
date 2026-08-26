@@ -1,0 +1,13 @@
+{
+  "name": "thl-loyalty-functions",
+  "description": "Cloud Functions for THL Loyalty - phone+PIN and admin-PIN login that mint real Firebase Auth tokens.",
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^14.3.0",
+    "firebase-functions": "^7.3.2"
+  },
+  "private": true
+}
