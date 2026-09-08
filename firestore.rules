@@ -15,10 +15,20 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == clientId;
     }
 
+    // The walk-up check-in kiosk. No PIN is typed at the kiosk, so this
+    // claim is handed out to anyone who opens the check-in screen - it is
+    // therefore scoped to exactly what punching a loyalty card needs and
+    // nothing else. Deliberately NOT a stand-in for admin.
+    function isKiosk() {
+      return isSignedIn() && request.auth.token.kiosk == true;
+    }
+
     // clients/{clientId} - doc ID equals the signed-in client's uid (custom
     // token is minted with uid == clients doc ID by the clientLogin function).
     match /clients/{clientId} {
-      allow read: if isOwner(clientId) || isAdmin();
+      // The kiosk needs the name/phone list to show "tap your name". It
+      // gets read only - it can never create, edit or delete a client.
+      allow read: if isOwner(clientId) || isAdmin() || isKiosk();
       // Clients may only touch a narrow self-service field set (loyalty
       // redemption, PIN changes, etc. all stay admin-driven in the current
       // app - the client app never writes its own client doc today).
@@ -30,8 +40,18 @@ service cloud.firestore {
     // visit, edit notes, delete) - clients only ever read their own.
     match /records/{recordId} {
       allow read: if isSignedIn() &&
-        (resource.data.clientId == request.auth.uid || isAdmin());
-      allow create: if isAdmin();
+        (resource.data.clientId == request.auth.uid || isAdmin() || isKiosk());
+      // The kiosk creates the stub "Checked in" record and nothing else:
+      // no services, no prices, no notes beyond the stub, and it is always
+      // flagged viaCheckin so it shows up in Awaiting Checkout. Filling in
+      // the real visit details is an update, and stays admin-only.
+      allow create: if isAdmin() || (
+        isKiosk() &&
+        request.resource.data.viaCheckin == true &&
+        request.resource.data.services.size() == 0 &&
+        request.resource.data.keys().hasOnly(
+          ['clientId', 'date', 'notes', 'photos', 'services', 'viaCheckin'])
+      );
       allow update, delete: if isAdmin();
     }
 
@@ -83,7 +103,15 @@ service cloud.firestore {
     // below) - safe for any signed-in user to read, admin-only to write.
     match /settings/{docId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow create, delete: if isAdmin();
+      // The kiosk advances the golden-guest counter on each check-in. It
+      // may touch those two fields and nothing else - not the loyalty
+      // threshold, the schedule, the licences or anything else in here.
+      allow update: if isAdmin() || (
+        isKiosk() &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['checkinCounter', 'lastMilestoneWinner'])
+      );
     }
 
     // secure/* - admin credentials. Never touched by client SDKs; only

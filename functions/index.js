@@ -9,6 +9,7 @@ const db = getFirestore();
 const auth = getAuth();
 
 const ADMIN_UID = "admin";
+const KIOSK_UID = "kiosk";
 const ADMIN_DOC = db.collection("secure").doc("admin");
 
 function normalizePhone(phone) {
@@ -83,6 +84,24 @@ exports.adminLogin = onCall(async (request) => {
     throw new HttpsError("permission-denied", "Incorrect PIN.");
   }
   const token = await auth.createCustomToken(ADMIN_UID, { admin: true });
+  return { token };
+});
+
+/**
+ * The salon's walk-up check-in kiosk. There is deliberately no credential
+ * here: anyone who opens the check-in screen gets one of these tokens, the
+ * same way anyone standing at the iPad can already tap a name.
+ *
+ * What keeps this safe is the *claim*, not the login. A kiosk token carries
+ * {kiosk: true} and nothing else, and firestore.rules grants that claim only
+ * the four things punching a loyalty card needs: read the client list, read
+ * visit records, create a visit record, and bump the check-in counter in
+ * settings/config. It cannot delete anything, cannot touch services, slots,
+ * trends, licences or the rest of settings, cannot read secure/*, and cannot
+ * edit a client. Everything on the admin side still requires the admin PIN.
+ */
+exports.kioskLogin = onCall(async () => {
+  const token = await auth.createCustomToken(KIOSK_UID, { kiosk: true });
   return { token };
 });
 
