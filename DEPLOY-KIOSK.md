@@ -5,8 +5,12 @@ It adds:
 
 - a `kioskLogin` Cloud Function and a matching `kiosk` claim in
   `firestore.rules`, so **Client Check-In needs no PIN at all**;
+- the check-in screen starting **empty** - you search by name or phone
+  number instead of the whole client list being on display;
+- **Awaiting Checkout** showing only to a signed-in admin, plus a
+  **Check-In & Checkouts** entry on the admin dashboard so you can work
+  through checkouts back-to-back without logging out;
 - three loyalty reward options instead of two;
-- "fill in details" returning to the awaiting-checkout list;
 - United States in the country list.
 
 Only the first item touches Firebase. The other three are `index.html`
@@ -57,26 +61,43 @@ retesting — a stale page will look like the change didn't work.
 
 ## Smoke test
 
+### At the kiosk (no login)
+
 1. Open `?admin=1` in a private window (so there's no saved session) and
-   tap **Client Check-In**. It should go straight to the list with no PIN
-   prompt.
-2. Tap a client, confirm the check-in, see the greeting.
-3. Under **Awaiting Checkout**, tap **Fill In Details**. This *does* ask
-   for the admin PIN — it opens the client's full file. After the PIN it
-   should land straight on that visit.
-4. Add the service, tap **Save Notes**. It should drop you back on the
-   check-in list with that client gone from Awaiting Checkout.
-5. Open a client with 6+ visits: the reward box should offer three
-   choices — 20% off hair services, 25% off spa services, free product.
-6. Edit a client and check **United States** is in the country dropdown.
+   tap **Client Check-In**. It should go straight in with no PIN prompt,
+   and the screen should be **empty** — no client names at all.
+2. Type a name (2+ letters) or a phone number. Only matching clients
+   appear. Full number or last 4 digits both work.
+3. Tap the name, confirm the check-in, see the greeting.
+4. Confirm **Awaiting Checkout** is NOT shown here — that list is only
+   for you, when you're signed in.
+
+### Your checkout round (signed in)
+
+5. Tap **Nickita**, enter the admin PIN once.
+6. On the dashboard, tap **✓ Check-In & Checkouts** — it shows how many
+   are waiting. No logging out to get there.
+7. Tap **Fill In Details** on the first one. No second PIN prompt.
+8. Add the service, tap **Save Notes**. You land back on the checkout
+   list with that client gone. Repeat for the next one.
+9. **‹ Back** from that screen returns you to your dashboard, still
+   signed in.
+
+### The rest
+
+10. Open a client with 6+ visits: the reward box should offer three
+    choices — 20% off hair services, 25% off spa services, free product.
+11. Edit a client and check **United States** is in the country dropdown.
 
 ## What the kiosk token can and cannot do
 
 Anyone who opens the check-in screen gets a `kiosk` token. The rules give
 that claim exactly four things:
 
-- read the client list (names and phones — needed to tap a name)
-- read visit records (needed for the Awaiting Checkout list)
+- read the client list (the app only ever shows search matches, never the
+  roster, but the token itself can read the collection — see below)
+- read visit records (`Td` reads a client's prior visits to build their
+  greeting)
 - create a check-in stub record (must be flagged `viaCheckin`, must carry
   no services, and may contain no other fields)
 - change `checkinCounter` and `lastMilestoneWinner` in `settings/config`
@@ -84,3 +105,16 @@ that claim exactly four things:
 It **cannot** edit or delete anything else, add or delete clients, change
 prices, services, the schedule or licences, or read the admin PIN. All of
 that still needs the admin claim, which still needs the admin PIN.
+
+### The honest limit
+
+Hiding the roster behind a search box is a real improvement — a person
+standing at the iPad can no longer read off your client list. But it is a
+UI guard, not a wall. Someone who knows how to open browser developer
+tools on that page could still call the database directly with the kiosk
+token and pull names, phone numbers and visit notes.
+
+Closing that properly means the kiosk talking to a Cloud Function that
+only ever returns the one client being searched for, instead of talking to
+Firestore directly. That's a bigger change and it is worth doing if the
+iPad is ever left somewhere customers are alone with it. Say the word.
